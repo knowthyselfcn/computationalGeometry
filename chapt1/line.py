@@ -16,7 +16,7 @@ class Example(QtGui.QWidget):
     
     def __init__(self):
         super(Example, self).__init__()
-        self.line1 = [QtCore.QPoint(20, 40), QtCore.QPoint(250, 40)]     #[start, end]
+        self.line1 = [QtCore.QPoint(0.2, 0.5), QtCore.QPoint(0.4, 0.7)]  #[start, end]
         self.line2 = [QtCore.QPoint(250, 90), QtCore.QPoint(250, 340)]
         self.lastPos = QtCore.QPoint()
         self.initUI()
@@ -32,7 +32,7 @@ class Example(QtGui.QWidget):
         self.coordinate_system_lines_.append(QPointF(0, -self.total_length))
         self.coordinate_system_lines_.append(QPointF(0, self.total_length))
 
-        self.scene_translation_ = QPointF()
+        self.scene_translation_ = QPointF(0, 0)
         self.lastPos = QPoint()
         self.scene_size_ = 1.5
 
@@ -48,19 +48,11 @@ class Example(QtGui.QWidget):
 
     def drawLines(self, qp):
         pen = QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.SolidLine)
-        qp.setPen(pen)
+        # qp.setPen(pen)
         l1 = self.line1
         l2 = self.line2
         qp.drawLine(l1[0].x(), l1[0].y(), l1[1].x(), l1[1].y())
-        qp.drawLine(l2[0].x(), l2[0].y(), l2[1].x(), l2[1].y())
-
-    def mouseMoveEvent (self, me):
-        l2 = self.line2
-        delta = me.pos() - self.lastPos
-        l2[0] = l2[0] + delta
-        l2[1] = l2[1] + delta
-        self.lastPos = me.pos()
-        self.update()
+        # qp.drawLine(l2[0].x(), l2[0].y(), l2[1].x(), l2[1].y())
 
     def mousePressEvent (self, pe):
         self.lastPos = pe.pos()
@@ -73,9 +65,13 @@ class Example(QtGui.QWidget):
             return
         if e.buttons() & Qt.RightButton :
             translation = self.screenToWorld(newPos) - self.screenToWorld(self.lastPos)
-            print(translation)
             self.scene_translation_ = self.scene_translation_ + translation
-
+        elif e.buttons() & Qt.LeftButton:
+            l2 = self.line2
+            delta = e.pos() - self.lastPos
+            l2[0] = l2[0] + delta
+            l2[1] = l2[1] + delta
+        self.lastPos = e.pos()
         self.update()
 
 
@@ -90,7 +86,6 @@ class Example(QtGui.QWidget):
             scale_factor  = scale_factor * 11/10
         else :
             scale_factor = scale_factor * 10 / 11
-        print scale_factor
         if scale_factor < 0:
             scale_factor = -scale_factor
         self.scene_size_ = self.scene_size_ * scale_factor
@@ -106,9 +101,6 @@ class Example(QtGui.QWidget):
         pen.setColor( color )
         painter.setPen(pen)
         painter.drawLines(self.coordinate_system_lines_ )
-        old_transform = painter.worldTransform()
-        painter.resetTransform()
-        painter.setWorldTransform(old_transform)
 
 
     def getZoomFactor(self):
@@ -129,6 +121,7 @@ class Example(QtGui.QWidget):
         return worldPos
 
     def worldToScreen(self, qPointF):
+        print(qPointF)
         screen = self.getWorldToScreenTransform().map(qPointF)    #QPointF
         return QPoint(screen.x(), screen.y())
 
@@ -152,18 +145,22 @@ class Example(QtGui.QWidget):
     def postDraw(self, painter):
         painter.restore()
 
+    def drawObjs(self):
+        pass
+
     def paintEvent(self, e):
-        qp = QtGui.QPainter()   #this is the main QPainter
-        qp.begin(self)
+        qp = QtGui.QPainter(self)   #this is the main QPainter
+        # qp.begin(self)
 
         self.preDraw(qp)
+        self.drawCoord(qp)
 
         self.drawLines(qp)
-        self.drawCoord(qp)
+        # self.drawObjs()
 
         self.postDraw(qp)
 
-        qp.end()
+        # qp.end()
 
 def main():    
     app = QtGui.QApplication(sys.argv)
