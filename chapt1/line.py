@@ -174,9 +174,8 @@ class CoordWidget(QtGui.QWidget):
         projectedPointWorld = pointInLine(self.screenToWorld(self.lastPos), self.line1)
         pen.setColor(QColor.fromRgb(0, 255, 0))
         qPainter.setPen(pen)
-        print projectedPointWorld, self.lastPos
         qPainter.drawPoint(self.worldToScreen(projectedPointWorld))
-
+        # self.showInfo(qPainter, projectedPointWorld)
         qPainter.setWorldTransform(old_transform)
 
     def lineIntersectTest(self, qLineF1, qLineF2):
