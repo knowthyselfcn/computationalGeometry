@@ -16,8 +16,8 @@ class Example(QtGui.QWidget):
     
     def __init__(self):
         super(Example, self).__init__()
-        self.line1 = [QtCore.QPoint(0.2, 0.5), QtCore.QPoint(0.4, 0.7)]  #[start, end]
-        self.line2 = [QtCore.QPoint(250, 90), QtCore.QPoint(250, 340)]
+        self.line1 = QLineF(QPointF(-0.4, -0.2), QPointF(-0.1, 0.3))
+        self.line2 = QLineF(QPointF(0.2, 0.1), QPointF(0.4, -0.3))
         self.lastPos = QtCore.QPoint()
         self.initUI()
         
@@ -37,22 +37,6 @@ class Example(QtGui.QWidget):
         self.scene_size_ = 1.5
 
         self.show()
-        
-    def drawPoints(self, qp):      
-        qp.setPen(QtCore.Qt.red)
-        size = self.size()        
-        for i in range(1000):
-            x = random.randint(1, size.width()-1)
-            y = random.randint(1, size.height()-1)
-            qp.drawPoint(x, y)
-
-    def drawLines(self, qp):
-        pen = QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.SolidLine)
-        # qp.setPen(pen)
-        l1 = self.line1
-        l2 = self.line2
-        qp.drawLine(l1[0].x(), l1[0].y(), l1[1].x(), l1[1].y())
-        # qp.drawLine(l2[0].x(), l2[0].y(), l2[1].x(), l2[1].y())
 
     def mousePressEvent (self, pe):
         self.lastPos = pe.pos()
@@ -67,10 +51,8 @@ class Example(QtGui.QWidget):
             translation = self.screenToWorld(newPos) - self.screenToWorld(self.lastPos)
             self.scene_translation_ = self.scene_translation_ + translation
         elif e.buttons() & Qt.LeftButton:
-            l2 = self.line2
-            delta = e.pos() - self.lastPos
-            l2[0] = l2[0] + delta
-            l2[1] = l2[1] + delta
+            translation = self.screenToWorld(newPos) - self.screenToWorld(self.lastPos) #QPointF
+            self.line2.translate(translation)
         self.lastPos = e.pos()
         self.update()
 
@@ -83,9 +65,9 @@ class Example(QtGui.QWidget):
         old_world_pos_of_mouse = self.screenToWorld(e.pos())
         scale_factor = 1
         if e.delta() > 0 :
-            scale_factor  = scale_factor * 11/10
-        else :
             scale_factor = scale_factor * 10 / 11
+        else :
+            scale_factor = scale_factor * 11 / 10
         if scale_factor < 0:
             scale_factor = -scale_factor
         self.scene_size_ = self.scene_size_ * scale_factor
@@ -94,14 +76,6 @@ class Example(QtGui.QWidget):
         self.scene_translation_ = self.scene_translation_ + self.screenToWorld(e.pos()) - self.screenToWorld(new_screen_pos_of_mouse)
 
         self.update()
-
-    def drawCoord(self, painter):
-        pen = QtGui.QPen()
-        color = QColor.fromRgb(200, 200, 200)
-        pen.setColor( color )
-        painter.setPen(pen)
-        painter.drawLines(self.coordinate_system_lines_ )
-
 
     def getZoomFactor(self):
         return min(self.width() / self.scene_size_, self.height() / self.scene_size_)
@@ -121,32 +95,81 @@ class Example(QtGui.QWidget):
         return worldPos
 
     def worldToScreen(self, qPointF):
-        print(qPointF)
         screen = self.getWorldToScreenTransform().map(qPointF)    #QPointF
         return QPoint(screen.x(), screen.y())
 
 
 
-    def showInfo(self):
-        pass
+    def showInfo(self, qPainter):
+        qPainter.drawText("hello")
 
-    def preDraw(self, painter):
-        painter.save()
-        painter.setWorldTransform(self.getWorldToScreenTransform())
-        pen = painter.pen()
-        pen.setWidth(1)
+    def preDraw(self, qPainter):
+        qPainter.save()
+        qPainter.setWorldTransform(self.getWorldToScreenTransform())
+        pen = qPainter.pen()
         pen.setCosmetic(True)
-        painter.setPen(pen)
+        qPainter.setPen(pen)
         brush = QtGui.QBrush()
         brush.setColor(QColor.fromRgb(255, 0, 0))
         brush.setStyle(Qt.SolidPattern)
-        painter.setBrush(brush)
+        qPainter.setBrush(brush)
 
     def postDraw(self, painter):
         painter.restore()
 
-    def drawObjs(self):
-        pass
+
+    def drawCoord(self, qPainter):
+        # pen = QtGui.QPen()
+        pen = qPainter.pen()
+        color = QColor.fromRgb(200, 200, 200)
+        pen.setColor( color )
+        qPainter.setPen(pen)
+        qPainter.drawLines(self.coordinate_system_lines_ )
+
+
+    def drawObjs(self, qPainter):
+        pen = qPainter.pen()
+        color = QColor.fromRgb(255, 0, 0)
+        pen.setColor( color )
+        qPainter.setPen(pen)
+        qPainter.drawLine(self.line1)
+
+        bluePen = QtGui.QPen()
+        bluePen.setColor(QColor.fromRgb(0, 0, 255))
+        qPainter.setPen(bluePen)
+        qPainter.drawLine(self.line2)
+        x = self.lineIntersectTest(self.line1, self.line2)
+
+        old_transform = qPainter.worldTransform()
+        pen.setWidth(5)
+        pen.setColor(QColor.fromRgb(0, 0, 0))
+        qPainter.setPen(pen)
+        qPainter.resetTransform()
+        crossPoint = self.worldToScreen(QPointF(x[0], x[1]))
+        qPainter.drawPoint(crossPoint)
+        qPainter.setWorldTransform(old_transform)
+
+
+    def drawPoints(self, qp):
+        qp.setPen(QtCore.Qt.red)
+        size = self.size()
+        for i in range(1000):
+            x = random.randint(1, size.width()-1)
+            y = random.randint(1, size.height()-1)
+            qp.drawPoint(x, y)
+
+    def lineIntersectTest(self, qLineF1, qLineF2):
+
+        a1 = (qLineF1.y1() - qLineF1.y2())/(qLineF1.x1() - qLineF1.x2())
+        b1 = qLineF1.y1() - a1 * qLineF1.x1()
+        a2 = (qLineF2.y1() - qLineF2.y2()) / (qLineF2.x1() - qLineF2.x2())
+        b2 = qLineF2.y1() - a2 * qLineF2.x1()
+        a = np.array([[a1, -1 ], [a2, -1]])
+        b = np.array([-b1, -b2])
+        x = np.linalg.solve(a, b)
+        return x
+
+
 
     def paintEvent(self, e):
         qp = QtGui.QPainter(self)   #this is the main QPainter
@@ -155,8 +178,7 @@ class Example(QtGui.QWidget):
         self.preDraw(qp)
         self.drawCoord(qp)
 
-        self.drawLines(qp)
-        # self.drawObjs()
+        self.drawObjs(qp)
 
         self.postDraw(qp)
 
