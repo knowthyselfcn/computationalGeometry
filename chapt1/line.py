@@ -10,12 +10,29 @@ from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
 from PyQt4.QtGui import QColor, QMatrix, QTransform
 import numpy as np
 
+def pointInLine(qPointF, qLineF):
+    from sympy import Point, Line, Segment, Rational
+    p1 = Point(qPointF.x(), qPointF.y())
+    l = Line(Point(qLineF.x1(), qLineF.y1()), Point(qLineF.x2(), qLineF.y2()))
+    point2d = l.projection(p1)
+    return QPointF(point2d[0], point2d[1])
 
+#@ return Boolean
+def pointInSegment(qPointF, qLineF):
+    length = qLineF.length()
+    newLength = QLineF(qLineF.p1() , qPointF).length() + QLineF(qLineF.p2() , qPointF).length()
+    dist = newLength - length
+    res = False
+    if  dist > sys.float_info.epsilon:
+        res = False
+    else:
+        res = True
+    return res
 
-class Example(QtGui.QWidget):
+class CoordWidget(QtGui.QWidget):
     
     def __init__(self):
-        super(Example, self).__init__()
+        super(CoordWidget, self).__init__()
         self.line1 = QLineF(QPointF(-0.4, -0.2), QPointF(-0.1, 0.3))
         self.line2 = QLineF(QPointF(0.2, 0.1), QPointF(0.4, -0.3))
         self.lastPos = QtCore.QPoint()
@@ -35,6 +52,7 @@ class Example(QtGui.QWidget):
         self.scene_translation_ = QPointF(0, 0)
         self.lastPos = QPoint()
         self.scene_size_ = 1.5
+        self.msgCnt = 0
 
         self.show()
 
@@ -100,8 +118,10 @@ class Example(QtGui.QWidget):
 
 
 
-    def showInfo(self, qPainter):
-        qPainter.drawText("hello")
+    def showInfo(self, qPainter, qStr):
+        self.msgCnt =  self.msgCnt + 1
+        qPainter.drawText(QPoint(0, 10 * self.msgCnt ), qStr)
+
 
     def preDraw(self, qPainter):
         qPainter.save()
@@ -139,27 +159,27 @@ class Example(QtGui.QWidget):
         qPainter.setPen(bluePen)
         qPainter.drawLine(self.line2)
         x = self.lineIntersectTest(self.line1, self.line2)
+        crossPoint = QPointF(x[0], x[1])
 
         old_transform = qPainter.worldTransform()
         pen.setWidth(5)
         pen.setColor(QColor.fromRgb(0, 0, 0))
         qPainter.setPen(pen)
         qPainter.resetTransform()
-        crossPoint = self.worldToScreen(QPointF(x[0], x[1]))
-        qPainter.drawPoint(crossPoint)
+        crossPointWorld = self.worldToScreen(crossPoint)
+        qPainter.drawPoint(crossPointWorld)
+
+        pointInSegment(crossPoint, self.line1)
+
+        projectedPointWorld = pointInLine(self.screenToWorld(self.lastPos), self.line1)
+        pen.setColor(QColor.fromRgb(0, 255, 0))
+        qPainter.setPen(pen)
+        print projectedPointWorld, self.lastPos
+        qPainter.drawPoint(self.worldToScreen(projectedPointWorld))
+
         qPainter.setWorldTransform(old_transform)
 
-
-    def drawPoints(self, qp):
-        qp.setPen(QtCore.Qt.red)
-        size = self.size()
-        for i in range(1000):
-            x = random.randint(1, size.width()-1)
-            y = random.randint(1, size.height()-1)
-            qp.drawPoint(x, y)
-
     def lineIntersectTest(self, qLineF1, qLineF2):
-
         a1 = (qLineF1.y1() - qLineF1.y2())/(qLineF1.x1() - qLineF1.x2())
         b1 = qLineF1.y1() - a1 * qLineF1.x1()
         a2 = (qLineF2.y1() - qLineF2.y2()) / (qLineF2.x1() - qLineF2.x2())
@@ -173,20 +193,18 @@ class Example(QtGui.QWidget):
 
     def paintEvent(self, e):
         qp = QtGui.QPainter(self)   #this is the main QPainter
-        # qp.begin(self)
+        self.msgCnt = 0
 
         self.preDraw(qp)
         self.drawCoord(qp)
-
         self.drawObjs(qp)
-
         self.postDraw(qp)
 
-        # qp.end()
-
+        self.showInfo(qp, "sdfsdf")
+        self.showInfo(qp, "**********")
 def main():    
     app = QtGui.QApplication(sys.argv)
-    ex = Example()
+    ex = CoordWidget()
     sys.exit(app.exec_())
 
 
