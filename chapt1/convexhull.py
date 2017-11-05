@@ -17,11 +17,6 @@ import numpy as np
 from PIL import Image
 import StringIO
 
-# return QPolygonF
-def makeConvexHull(vertexs):
-    poly = QPolygonF()
-
-    return poly
 
 
 
@@ -29,10 +24,10 @@ class ConvexHull(CoordWidget):
     def __init__(self):
         super(ConvexHull, self).__init__()
         self.setGeometry(300, 300, 800, 600)
-        self.setWindowTitle('Mkake Polygon ')
+        self.setWindowTitle('Make Convex Polygon ')
         self.vertexs = []   #world  pos
         self.points = []    # screen pos
-        self.polygon = QPolygonF()
+        self.polygon = None
         self.images = []
 
     def mouseMoveEvent(self, e):
@@ -75,16 +70,44 @@ class ConvexHull(CoordWidget):
 
     def saveGIF(self):
         img = self.images[0]
-        img.save("aaaaaaaaaaaaaa.gif", save_all=True, append_images=self.images)
+        img.save("aaaaaaaaaaaaaa.gif", optimize=True, save_all=True, append_images=self.images, quality=10)
+
+    def isRightTurn(self, p0, p1, p2):
+        v1x = p1.x() - p0.x()
+        v1y = p1.y() - p0.y()
+        v2x = p2.x() - p1.y()
+        v2y = p2.y() - p1.y()
+        if v1x * v2y - v1y * v2x > 0.0:
+            return False
+        else:
+            return True
+
+    def makeConvexHull(self, vertexs):
+        self.vertexs.sort(key=lambda x: x.x())
+        upper = [self.vertexs[0], self.vertexs[1]]
+        for v in self.vertexs[2:len(self.vertexs)]:
+            upper.append(v)
+            while len(upper) > 2 and self.isRightTurn(upper[-3], upper[-2], upper[-1]):
+                del upper[-2]
+        lower = [self.vertexs[-1], self.vertexs[-2]]
+        for v in reversed( self.vertexs[0:-3]):
+            lower.append(v)
+            while len(lower) > 2 and self.isRightTurn(lower[-3], lower[-2], lower[-1]):
+                del lower[-2]
+        del lower[0]; del lower[-1]
+        upper.extend(lower)
+        self.polygon = QPolygonF()
+        for v in upper:
+            self.polygon.append(v)
 
     def keyPressEvent(self, keyEvent):
         e = keyEvent
         if e.key() == Qt.Key_C:
-            self.polygon = makeConvexHull(self.vertexs)
-        # elif e.key() == Qt.Key_P:
-        #     self.take_screenshot()
+            self.makeConvexHull(self.vertexs)
         elif e.key() == Qt.Key_S:
             self.saveGIF()
+        # elif e.key() == Qt.Key_P :
+        super(ConvexHull, self).keyPressEvent(keyEvent)
 
     def drawInWorld(self, qPainter):
         pen = qPainter.pen()
@@ -98,11 +121,11 @@ class ConvexHull(CoordWidget):
         # qPainter.drawPolyline(poly)
 
         # draw convex hull
-        qPainter.drawPolyline(self.polygon)
+        if None != self.polygon:
+            qPainter.drawPolyline(self.polygon)
 
         pen.setColor(QColor.fromRgb(0, 0, 255))
         qPainter.setPen(pen)
-        # qPainter.drawConvexPolygon(self.qPolygon3)
 
         # draw in screen
         old_transform = qPainter.worldTransform()
