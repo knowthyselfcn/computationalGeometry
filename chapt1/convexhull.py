@@ -50,6 +50,7 @@ class ConvexHull(CoordWidget):
             self.vertexs.append(vertex)
             self.points.append(e.pos())
             self.take_screenshot()
+            self.makeConvexHull(self.vertexs)
         self.lastPos = e.pos()
         self.update()
 
@@ -75,7 +76,7 @@ class ConvexHull(CoordWidget):
     def isRightTurn(self, p0, p1, p2):
         v1x = p1.x() - p0.x()
         v1y = p1.y() - p0.y()
-        v2x = p2.x() - p1.y()
+        v2x = p2.x() - p1.x()
         v2y = p2.y() - p1.y()
         if v1x * v2y - v1y * v2x > 0.0:
             return False
@@ -83,6 +84,8 @@ class ConvexHull(CoordWidget):
             return True
 
     def makeConvexHull(self, vertexs):
+        if len(vertexs) < 3:
+            return
         self.vertexs.sort(key=lambda x: x.x())
         upper = [self.vertexs[0], self.vertexs[1]]
         for v in self.vertexs[2:len(self.vertexs)]:
@@ -94,7 +97,8 @@ class ConvexHull(CoordWidget):
             lower.append(v)
             while len(lower) > 2 and self.isRightTurn(lower[-3], lower[-2], lower[-1]):
                 del lower[-2]
-        del lower[0]; del lower[-1]
+        del lower[0];
+        # del lower[-1]
         upper.extend(lower)
         self.polygon = QPolygonF()
         for v in upper:
@@ -112,13 +116,7 @@ class ConvexHull(CoordWidget):
     def drawInWorld(self, qPainter):
         pen = qPainter.pen()
         pen.setColor(QColor.fromRgb(255, 0, 0))
-        # pen.setWidth(3)
         qPainter.setPen(pen)
-        # draw  polyline
-        # poly = QPolygonF()
-        # for v  in self.vertexs:
-        #     poly.append(v)
-        # qPainter.drawPolyline(poly)
 
         # draw convex hull
         if None != self.polygon:
