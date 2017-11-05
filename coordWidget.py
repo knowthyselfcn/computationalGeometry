@@ -52,7 +52,6 @@ class CoordWidget(QtGui.QWidget):
         self.scene_translation_ = QPointF(0, 0)
         self.lastPos = QPoint()
         self.scene_size_ = 1.5
-        self.msgCnt = 0
 
         self.show()
 
@@ -116,12 +115,8 @@ class CoordWidget(QtGui.QWidget):
         screen = self.getWorldToScreenTransform().map(qPointF)    #QPointF
         return QPoint(screen.x(), screen.y())
 
-
-
-    def showInfo(self, qPainter, qStr):
-        self.msgCnt =  self.msgCnt + 1
-        qPainter.drawText(QPoint(0, 10 * self.msgCnt ), qStr)
-
+    def showInfo(self, qPainter):
+        qPainter.drawText("hello")
 
     def preDraw(self, qPainter):
         qPainter.save()
@@ -131,7 +126,7 @@ class CoordWidget(QtGui.QWidget):
         qPainter.setPen(pen)
         brush = QtGui.QBrush()
         brush.setColor(QColor.fromRgb(255, 0, 0))
-        brush.setStyle(Qt.SolidPattern)
+        brush.setStyle(Qt.SolidPattern)       # 填充绘制的多边形区域
         qPainter.setBrush(brush)
 
     def postDraw(self, painter):
@@ -147,60 +142,21 @@ class CoordWidget(QtGui.QWidget):
         qPainter.drawLines(self.coordinate_system_lines_ )
 
 
-    def drawObjs(self, qPainter):
-        pen = qPainter.pen()
-        color = QColor.fromRgb(255, 0, 0)
-        pen.setColor( color )
-        qPainter.setPen(pen)
-        qPainter.drawLine(self.line1)
-
-        bluePen = QtGui.QPen()
-        bluePen.setColor(QColor.fromRgb(0, 0, 255))
-        qPainter.setPen(bluePen)
-        qPainter.drawLine(self.line2)
-        x = self.lineIntersectTest(self.line1, self.line2)
-        crossPoint = QPointF(x[0], x[1])
-
-        old_transform = qPainter.worldTransform()
-        pen.setWidth(5)
-        pen.setColor(QColor.fromRgb(0, 0, 0))
-        qPainter.setPen(pen)
-        qPainter.resetTransform()
-        crossPointWorld = self.worldToScreen(crossPoint)
-        qPainter.drawPoint(crossPointWorld)
-
-        pointInSegment(crossPoint, self.line1)
-
-        projectedPointWorld = pointInLine(self.screenToWorld(self.lastPos), self.line1)
-        pen.setColor(QColor.fromRgb(0, 255, 0))
-        qPainter.setPen(pen)
-        qPainter.drawPoint(self.worldToScreen(projectedPointWorld))
-        # self.showInfo(qPainter, projectedPointWorld)
-        qPainter.setWorldTransform(old_transform)
-
-    def lineIntersectTest(self, qLineF1, qLineF2):
-        a1 = (qLineF1.y1() - qLineF1.y2())/(qLineF1.x1() - qLineF1.x2())
-        b1 = qLineF1.y1() - a1 * qLineF1.x1()
-        a2 = (qLineF2.y1() - qLineF2.y2()) / (qLineF2.x1() - qLineF2.x2())
-        b2 = qLineF2.y1() - a2 * qLineF2.x1()
-        a = np.array([[a1, -1 ], [a2, -1]])
-        b = np.array([-b1, -b2])
-        x = np.linalg.solve(a, b)
-        return x
-
-
+    def drawInWorld(self, qPainter):
+        pass
 
     def paintEvent(self, e):
         qp = QtGui.QPainter(self)   #this is the main QPainter
-        self.msgCnt = 0
+        # qp.begin(self)
 
         self.preDraw(qp)
         self.drawCoord(qp)
-        self.drawObjs(qp)
+
+        self.drawInWorld(qp)
+
         self.postDraw(qp)
 
-        self.showInfo(qp, "sdfsdf")
-        self.showInfo(qp, "**********")
+
 def main():    
     app = QtGui.QApplication(sys.argv)
     ex = CoordWidget()
