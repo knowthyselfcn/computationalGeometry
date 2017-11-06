@@ -13,11 +13,6 @@ from PyQt4.QtGui import QApplication, QWidget
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
 from PyQt4.QtGui import QColor, QMatrix, QTransform, QPolygonF
-import numpy as np
-from PIL import Image
-import StringIO
-
-
 
 
 class ConvexHull(CoordWidget):
@@ -28,7 +23,7 @@ class ConvexHull(CoordWidget):
         self.vertexs = []   #world  pos
         self.points = []    # screen pos
         self.polygon = None
-        self.images = []
+
 
     def mouseMoveEvent(self, e):
         newPos = e.pos()
@@ -54,24 +49,7 @@ class ConvexHull(CoordWidget):
         self.lastPos = e.pos()
         self.update()
 
-    # save QImage to PIL image
-    def take_screenshot(self):
-        qPixmap = QtGui.QPixmap.grabWindow(self.winId())
-        qImage = qPixmap.toImage()
-        qBuffer = QtCore.QBuffer()
-        qBuffer.open(QtCore.QIODevice.ReadWrite)
-        qImage.save(qBuffer, "PNG")
-        strio = StringIO.StringIO()
-        strio.write(qBuffer.data())
-        qBuffer.close()
-        strio.seek(0)
-        pil_im = Image.open(strio)
-        self.images.append(pil_im)
 
-
-    def saveGIF(self):
-        img = self.images[0]
-        img.save("aaaaaaaaaaaaaa.gif", optimize=True, save_all=True, append_images=self.images, quality=10)
 
     def isRightTurn(self, p0, p1, p2):
         v1x = p1.x() - p0.x()
@@ -124,16 +102,15 @@ class ConvexHull(CoordWidget):
         pen.setColor(QColor.fromRgb(0, 0, 255))
         qPainter.setPen(pen)
 
-        # draw in screen
-        old_transform = qPainter.worldTransform()
+    def drawInScreen(self, qPainter):
+        pen = qPainter.pen()
         pen.setWidth(5)
         pen.setColor(QColor.fromRgb(0, 0, 0))
         qPainter.setPen(pen)
         qPainter.resetTransform()
         # draw selected points in screen
         for v in self.points:
-            qPainter.drawPoint (v)
-        qPainter.setWorldTransform(old_transform)
+            qPainter.drawPoint(v)
 
 
 def main():

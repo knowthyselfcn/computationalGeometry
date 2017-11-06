@@ -8,7 +8,10 @@ from PyQt4.QtGui import QApplication, QWidget
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
 from PyQt4.QtGui import QColor, QMatrix, QTransform
-import numpy as np
+# import numpy as np
+from PIL import Image
+import StringIO
+
 
 def pointInLine(qPointF, qLineF):
     from sympy import Point, Line, Segment, Rational
@@ -52,6 +55,8 @@ class CoordWidget(QtGui.QWidget):
         self.scene_translation_ = QPointF(0, 0)
         self.lastPos = QPoint()
         self.scene_size_ = 1.5
+
+        self.images = []
 
         self.show()
 
@@ -118,6 +123,25 @@ class CoordWidget(QtGui.QWidget):
     def showInfo(self, qPainter):
         qPainter.drawText("hello")
 
+
+    # save QImage to PIL image
+    def take_screenshot(self):
+        qPixmap = QtGui.QPixmap.grabWindow(self.winId())
+        qImage = qPixmap.toImage()
+        qBuffer = QtCore.QBuffer()
+        qBuffer.open(QtCore.QIODevice.ReadWrite)
+        qImage.save(qBuffer, "PNG")
+        strio = StringIO.StringIO()
+        strio.write(qBuffer.data())
+        qBuffer.close()
+        strio.seek(0)
+        pil_im = Image.open(strio)
+        self.images.append(pil_im)
+
+    def saveGIF(self):
+        img = self.images[0]
+        img.save("aaaaaaaaaaaaaa.gif", optimize=True, save_all=True, append_images=self.images, quality=10)
+
     def preDraw(self, qPainter):
         qPainter.save()
         qPainter.setWorldTransform(self.getWorldToScreenTransform())
@@ -141,8 +165,11 @@ class CoordWidget(QtGui.QWidget):
         qPainter.setPen(pen)
         qPainter.drawLines(self.coordinate_system_lines_ )
 
-
+    # 这两个函数是为了子类override的。
     def drawInWorld(self, qPainter):
+        pass
+
+    def drawInScreen(self, qPainter):
         pass
 
     def paintEvent(self, e):
@@ -155,6 +182,8 @@ class CoordWidget(QtGui.QWidget):
         self.drawInWorld(qp)
 
         self.postDraw(qp)
+
+        self.drawInScreen(qp)
 
 
 def main():    
