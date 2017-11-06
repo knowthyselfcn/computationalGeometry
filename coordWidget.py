@@ -36,8 +36,6 @@ class CoordWidget(QtGui.QWidget):
     
     def __init__(self):
         super(CoordWidget, self).__init__()
-        self.line1 = QLineF(QPointF(-0.4, -0.2), QPointF(-0.1, 0.3))
-        self.line2 = QLineF(QPointF(0.2, 0.1), QPointF(0.4, -0.3))
         self.lastPos = QtCore.QPoint()
         self.initUI()
         
@@ -56,7 +54,7 @@ class CoordWidget(QtGui.QWidget):
         self.lastPos = QPoint()
         self.scene_size_ = 1.5
 
-        self.images = []
+        self.images = []   # save widget image to gif
 
         self.show()
 
@@ -64,6 +62,7 @@ class CoordWidget(QtGui.QWidget):
         self.lastPos = pe.pos()
         self.update()
 
+    # deal with general mouseMoveEvent, such as rightKey to move coord
     def mouseMoveEvent(self, e):
         newPos = e.pos()
         if (self.lastPos - newPos).manhattanLength() < 1:
@@ -72,13 +71,11 @@ class CoordWidget(QtGui.QWidget):
         if e.buttons() & Qt.RightButton :
             translation = self.screenToWorld(newPos) - self.screenToWorld(self.lastPos)
             self.scene_translation_ = self.scene_translation_ + translation
-        elif e.buttons() & Qt.LeftButton:
-            translation = self.screenToWorld(newPos) - self.screenToWorld(self.lastPos) #QPointF
-            self.line2.translate(translation)
+        # elif e.buttons() & Qt.LeftButton:
         self.lastPos = e.pos()
         self.update()
 
-
+    # general event: escape to exit,
     def keyPressEvent(self, keyEvent):
         if keyEvent.key() == Qt.Key_Escape:
             sys.exit(0)
@@ -88,7 +85,7 @@ class CoordWidget(QtGui.QWidget):
         scale_factor = 1
         if e.delta() > 0 :
             scale_factor = scale_factor * 10 / 11
-        else :
+        else:
             scale_factor = scale_factor * 11 / 10
         if scale_factor < 0:
             scale_factor = -scale_factor
@@ -122,7 +119,6 @@ class CoordWidget(QtGui.QWidget):
 
     def showInfo(self, qPainter):
         qPainter.drawText("hello")
-
 
     # save QImage to PIL image
     def take_screenshot(self):
