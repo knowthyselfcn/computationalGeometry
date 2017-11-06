@@ -4,8 +4,9 @@
 
 
 from __future__ import division
-from  coordWidget import CoordWidget
 import sys, random
+sys.path.append('../')
+from  coordWidget import CoordWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtGui import QApplication, QWidget
 from PyQt4 import QtGui, QtCore

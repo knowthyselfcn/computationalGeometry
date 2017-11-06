@@ -55,7 +55,7 @@ class CoordWidget(QtGui.QWidget):
         self.scene_size_ = 1.5
 
         self.images = []   # save widget image to gif
-
+        self.msgCnt = 0
         self.show()
 
     def mousePressEvent (self, pe):
@@ -117,8 +117,12 @@ class CoordWidget(QtGui.QWidget):
         screen = self.getWorldToScreenTransform().map(qPointF)    #QPointF
         return QPoint(screen.x(), screen.y())
 
-    def showInfo(self, qPainter):
-        qPainter.drawText("hello")
+    def showInfo(self, qPainter, qStr):
+        self.msgCnt =  self.msgCnt + 1
+        pen = qPainter.pen()
+        pen.setColor(QColor.fromRgb(0, 0, 0))
+        qPainter.setPen(pen)
+        qPainter.drawText(QPoint(0, 10 * self.msgCnt ), qStr)
 
     # save QImage to PIL image
     def take_screenshot(self):

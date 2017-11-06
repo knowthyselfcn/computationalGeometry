@@ -76,6 +76,8 @@ class ConvexHull(CoordWidget):
             while len(lower) > 2 and self.isRightTurn(lower[-3], lower[-2], lower[-1]):
                 del lower[-2]
         del lower[0]
+        print upper
+        print lower
         upper.extend(lower)
         self.polygon = QPolygonF()
         for v in upper:
