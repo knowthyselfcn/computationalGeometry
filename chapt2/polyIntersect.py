@@ -6,7 +6,7 @@
 from __future__ import division
 
 import sys, random
-sys.path.append('/mypath/scriptlib')
+sys.path.append('../')
 from  coordWidget import CoordWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtGui import QApplication, QWidget
@@ -24,7 +24,6 @@ class PolyTest(CoordWidget):
         self.qPolygon1 = QPolygonF([QPointF(0.1, 0), QPointF(0.3, 0.1), QPointF(0.5, 0.3), QPointF(0.37, 0.5), QPointF(0.05, 0.1) ])
         self.qPolygon2 = QPolygonF([QPointF(-0.05, 0.1),  QPointF(-0.37, 0.5), QPointF(-0.5, 0.3),  QPointF(-0.3, 0.1), QPointF(-0.1, 0)])
         self.qPolygon3 = QPolygonF()
-        print(self.qPolygon1[0])
 
     # override super，多边形无需填充
     def preDraw(self, qPainter):

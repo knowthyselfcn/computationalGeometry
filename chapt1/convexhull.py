@@ -6,7 +6,7 @@
 from __future__ import division
 
 import sys, random
-sys.path.append('/mypath/scriptlib')
+sys.path.append('../')
 from  coordWidget import CoordWidget
 from PyQt4.Qt import Qt
 from PyQt4.QtGui import QApplication, QWidget
@@ -97,8 +97,7 @@ class ConvexHull(CoordWidget):
             lower.append(v)
             while len(lower) > 2 and self.isRightTurn(lower[-3], lower[-2], lower[-1]):
                 del lower[-2]
-        del lower[0];
-        # del lower[-1]
+        del lower[0]
         upper.extend(lower)
         self.polygon = QPolygonF()
         for v in upper:
