@@ -26,15 +26,8 @@ class Test(CoordWidget):
     def drawInWorld(self, qPainter):
         pen = qPainter.pen()
 
-
-        old_transform = qPainter.worldTransform()
-        pen.setWidth(5)
-        pen.setColor(QColor.fromRgb(0, 0, 0))
-        qPainter.setPen(pen)
-        qPainter.resetTransform()
-        crossPoint = self.worldToScreen(QPointF(0.2, 0.4))
-        qPainter.drawPoint(crossPoint)
-        qPainter.setWorldTransform(old_transform)
+    def drawInScreen(self, qPainter):
+        pass
 
 
 def main():

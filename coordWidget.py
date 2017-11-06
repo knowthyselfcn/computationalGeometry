@@ -51,7 +51,7 @@ class CoordWidget(QtGui.QWidget):
         self.coordinate_system_lines_.append(QPointF(0, self.total_length))
 
         self.scene_translation_ = QPointF(0, 0)
-        self.lastPos = QPoint()
+        self.lastPos = None
         self.scene_size_ = 1.5
 
         self.images = []   # save widget image to gif
@@ -122,7 +122,7 @@ class CoordWidget(QtGui.QWidget):
         pen = qPainter.pen()
         pen.setColor(QColor.fromRgb(0, 0, 0))
         qPainter.setPen(pen)
-        qPainter.drawText(QPoint(0, 10 * self.msgCnt ), qStr)
+        qPainter.drawText(QPoint(0, 15 * self.msgCnt ), qStr)
 
     # save QImage to PIL image
     def take_screenshot(self):

@@ -25,17 +25,6 @@ class PolyTest(CoordWidget):
         self.qPolygon2 = QPolygonF([QPointF(-0.05, 0.1),  QPointF(-0.37, 0.5), QPointF(-0.5, 0.3),  QPointF(-0.3, 0.1), QPointF(-0.1, 0)])
         self.qPolygon3 = QPolygonF()
 
-    # override super，多边形无需填充
-    def preDraw(self, qPainter):
-        qPainter.save()
-        qPainter.setWorldTransform(self.getWorldToScreenTransform())
-        pen = qPainter.pen()
-        pen.setCosmetic(True)
-        qPainter.setPen(pen)
-        brush = QtGui.QBrush()
-        brush.setColor(QColor.fromRgb(255, 0, 0))
-        # brush.setStyle(Qt.SolidLine)       #
-        qPainter.setBrush(brush)
 
     def mouseMoveEvent(self, e):
         newPos = e.pos()
@@ -50,6 +39,18 @@ class PolyTest(CoordWidget):
             self.qPolygon1.translate(translation)
         self.lastPos = e.pos()
         self.update()
+
+    # override super，多边形无需填充
+    def preDraw(self, qPainter):
+        qPainter.save()
+        qPainter.setWorldTransform(self.getWorldToScreenTransform())
+        pen = qPainter.pen()
+        pen.setCosmetic(True)
+        qPainter.setPen(pen)
+        brush = QtGui.QBrush()
+        brush.setColor(QColor.fromRgb(255, 0, 0))
+        # brush.setStyle(Qt.SolidLine)       #
+        qPainter.setBrush(brush)
 
     def drawInWorld(self, qPainter):
         pen = qPainter.pen()
