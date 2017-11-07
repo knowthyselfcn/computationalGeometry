@@ -6,14 +6,10 @@
 from __future__ import division
 import sys, random
 sys.path.append('../')
-from  coordWidget import CoordWidget
-from PyQt4.Qt import Qt
-from PyQt4.QtGui import QApplication, QWidget
-from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
 from PyQt4.QtGui import QColor, QMatrix, QTransform
 import numpy as np
-from bintrees import BinaryTree
+from bintrees import BinaryTree, AVLTree
 
 def pointInLine(qPointF, qLineF):
     from sympy import Point, Line, Segment, Rational
@@ -53,13 +49,26 @@ def lineIntersectTest( qLineF1, qLineF2):
 def handleEventPoint(p):    # QPointF
     pass
 
+def getSegByp(k, v):
+    pass
 
+#
+# S : segment list
 def findIntersections(S):
-    T = BinaryTree()
+    T = AVLTree()
     Q = []  # event queue with [QPointF, lineId]
     for i, l in enumerate(S):
-        Q.append([l.p1(), i])
-        Q.append([l.p2(), i])
-    for e in Q:
-        handleEventPoint(p)
+        Q.append([l.p1(), i, "l"])  # l : left, r : right, c : center
+        Q.append([l.p2(), i, "r"])
+    while Q:    # stops if Q = []
+        p = Q[0][0]
+        Q.pop(0)
+        # handleEventPoint(p)
+        Up = [p]
+        Lp = []
+        Segs = []
+        T.foreach(lambda k, v: print k, v;if v[0] == p: Segs.append(v[0]) )
+
+
+
 

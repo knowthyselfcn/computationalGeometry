@@ -102,3 +102,4 @@ ENV/
 *.gif
 *.iml
 *.xml
+/test.py

@@ -33,7 +33,6 @@ class Test(CoordWidget):
             if None != self.tmpPoint:
                 self.qLineFs.append(QLineF(self.screenToWorld(self.tmpPoint), self.screenToWorld(e.pos())))
                 self.tmpPoint = None
-                print self.qLineFs
             else:
                 self.tmpPoint = e.pos()
 

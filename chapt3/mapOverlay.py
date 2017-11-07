@@ -14,12 +14,12 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
 from PyQt4.QtGui import QColor, QMatrix, QTransform, QPolygonF
 import numpy as np
-from scipy.spatial import Delaonay
+import scipy.spatial import Delaynay
 
 
-class Triangulation(CoordWidget):
+class MayOverlay(CoordWidget):
     def __init__(self):
-        super(Triangulation, self).__init__()
+        super(MayOverlay, self).__init__()
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Triangulation Test')
 
@@ -67,7 +67,7 @@ class Triangulation(CoordWidget):
 
 def main():
     app = QtGui.QApplication(sys.argv)
-    ex = Triangulation()
+    ex = MayOverlay()
     sys.exit(app.exec_())
 
 
