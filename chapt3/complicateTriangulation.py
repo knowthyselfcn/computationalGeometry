@@ -28,11 +28,11 @@ class Triangluation(CoordWidget):
         super(Triangluation, self).__init__()
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Triangluation ')
-        self.vertexs = []   #world  pos
+        # self.vertexs = []   #world  pos
         self.points = []    # screen pos
         self.polygon = QPolygonF()
 
-        self.holeVertexs = []   #world  pos
+        # self.holeVertexs = []   #world  pos
         self.holePoints = []    # screen pos
         self.holePolygon = QPolygonF()
 
@@ -53,26 +53,16 @@ class Triangluation(CoordWidget):
         e = qMousePressEvent
         modifiers = QtGui.QApplication.keyboardModifiers()
         if e.buttons() & Qt.LeftButton:
-            vertex = self.screenToWorld(e.pos())  # QPointF
             self.take_screenshot()
             if modifiers == QtCore.Qt.ControlModifier:
                 self.holePoints.append(e.pos())
-                self.holeVertexs.append(vertex)
-                self.makeConvexHull(self.holeVertexs, self.holePolygon)
-                if self.holePolygon.size() > 4:
-                    self.holeVertexs = []
-                    for i in xrange(self.holePolygon.size()):
-                        self.holeVertexs.append( self.holePolygon.at(i))
+                self.makeConvexHull(self.holePoints, self.holePolygon)
             else:   # record a hole
                 self.points.append(e.pos())
-                self.vertexs.append(vertex)
-                self.makeConvexHull(self.vertexs, self.polygon)
-                if self.polygon.size() > 4:
-                    self.vertexs = []
-                    for i in xrange(self.polygon.size()):
-                        self.vertexs.append( self.polygon.at(i))
+                self.makeConvexHull(self.points, self.polygon)
         self.lastPos = e.pos()
         self.update()
+
 
     def isRightTurn(self, p0, p1, p2):
         v1x = p1.x() - p0.x()
@@ -84,17 +74,18 @@ class Triangluation(CoordWidget):
         else:
             return True
 
-    def makeConvexHull(self, vertexs, polygon):
-        vertexs.sort(key=lambda x: x.x())
-        if len(vertexs) < 3:
+    def makeConvexHull(self, points, polygon):
+        vertices = map(lambda p: self.screenToWorld(p), points)
+        vertices.sort(key=lambda p: (p.x(), p.y()))
+        if len(vertices) < 3:
             return
-        upper = [vertexs[0], vertexs[1]]
-        for v in vertexs[2:len(vertexs)]:
+        upper = [vertices[0], vertices[1]]
+        for v in vertices[2:len(vertices)]:
             upper.append(v)
             while len(upper) > 2 and self.isRightTurn(upper[-3], upper[-2], upper[-1]):
                 del upper[-2]
-        lower = [vertexs[-1], self.vertexs[-2]]
-        for v in reversed(vertexs[0:-3]):
+        lower = [vertices[-1], vertices[-2]]
+        for v in reversed(vertices[0:-3]):
             lower.append(v)
             while len(lower) > 2 and self.isRightTurn(lower[-3], lower[-2], lower[-1]):
                 del lower[-2]
@@ -106,18 +97,43 @@ class Triangluation(CoordWidget):
 
     # http://www.cs.cmu.edu/~quake/triangle.html
     def triangulate(self):
-        vertice = []
-        for v in self.vertexs:
-            vertice.append([v.x(), v.y()])
-        points = np.array(vertice)
-        holeVertice = []
-        for v in self.holeVertexs:
-            holeVertice.append([v.x(), v.y()])
-        holePoints = np.array(holeVertice)
-        A = dict(vertices=points, holes1=holePoints)
-        B = triangle.triangulate(A, 'pqa') #
-        triangle.plot.compare(plt, A, B)
+        vertices =[]
+        segments = []
+        for i in xrange(self.polygon.size()-1):
+            v = self.polygon.at(i)
+            vertices.append([v.x(), v.y()])
+            if( i == (self.polygon.size() -2) ):
+                segments.append([i, 0])
+            else:
+                segments.append([i, i + 1])
+        vertices = np.array(vertices)
+        holeVertices = []
+        holeMarkerPos = []
+        for i in xrange(self.holePolygon.size()-1):
+            v = self.holePolygon.at(i)
+            holeVertices.append([v.x(), v.y()])
+        holeVertices = np.array(holeVertices)
+        center = self.holePolygon.boundingRect().center()
+        holeMarkerPos.append([center.x(), center.y()])
+        A = dict(vertices=vertices, segments=segments, holes=holeMarkerPos)
+        print A
+        B = triangle.triangulate(A, 'q') #
+        ax1 = plt.subplot(121, aspect='equal')
+        triangle.plot.plot(ax1,  **B)
         plt.show()
+
+        # import triangle
+        # import triangle.plot as plot
+        # import matplotlib.pyplot as plt
+        # face = triangle.get_data('face')
+        # print face
+        # face['holes'][0][1] = -70
+        # ax1 = plt.subplot(121, aspect='equal')
+        # plot.plot(ax1, **face)
+        # t = triangle.triangulate(face, 'p')
+        # ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
+        # triangle.plot.plot(ax2, **t)
+        # plt.show()
 
     def keyPressEvent(self, keyEvent):
         e = keyEvent
@@ -135,7 +151,6 @@ class Triangluation(CoordWidget):
         pen.setColor(QColor.fromRgb(255, 0, 0))
         qPainter.setPen(pen)
 
-        # draw convex hull
         if None != self.polygon:
             qPainter.drawPolyline(self.polygon)
 
@@ -156,6 +171,11 @@ class Triangluation(CoordWidget):
         # draw selected points in screen
         for v in self.points:
             qPainter.drawPoint(v)
+
+        for i in xrange(self.polygon.size()-1):
+            qPainter.drawText( self.worldToScreen(self.polygon.at(i)), str(i) )
+        for i in xrange(self.holePolygon.size()-1):
+            qPainter.drawText( self.worldToScreen(self.holePolygon.at(i)), str(i) )
 
 
 def main():
