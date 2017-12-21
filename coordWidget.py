@@ -7,11 +7,10 @@ from PyQt5.Qt import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication,  QWidget
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF
+from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF, QRect, QSize
 from PyQt5.QtGui import QColor, QTransform
-# import numpy as np
 from PIL import Image
-from  io import StringIO
+from io import BytesIO
 
 
 def pointInLine(qPointF, qLineF):
@@ -33,8 +32,8 @@ def pointInSegment(qPointF, qLineF):
         res = True
     return res
 
+
 class CoordWidget(QtWidgets.QWidget):
-    
     def __init__(self):
         super(CoordWidget, self).__init__()
         self.lastPos = QtCore.QPoint()
@@ -122,12 +121,12 @@ class CoordWidget(QtWidgets.QWidget):
 
     # save QImage to PIL image
     def take_screenshot(self):
-        qPixmap = QtGui.QPixmap.grabWindow(self.winId())
+        qPixmap = self.grab( QRect( QPoint( 0, 0 ), QSize( -1, -1 ) ))
         qImage = qPixmap.toImage()
         qBuffer = QtCore.QBuffer()
         qBuffer.open(QtCore.QIODevice.ReadWrite)
         qImage.save(qBuffer, "PNG")
-        strio = StringIO.StringIO()
+        strio = BytesIO()
         strio.write(qBuffer.data())
         qBuffer.close()
         strio.seek(0)

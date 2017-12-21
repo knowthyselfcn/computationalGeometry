@@ -1,19 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-
 from __future__ import division
-
 import sys, random
 sys.path.append('../')
+from PyQt5.Qt import Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication,  QWidget
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF
+from PyQt5.QtGui import QColor, QTransform, QPolygonF
 from  coordWidget import CoordWidget
-from PyQt4.Qt import Qt
-from PyQt4.QtGui import QApplication, QWidget
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
-from PyQt4.QtGui import QColor, QMatrix, QTransform, QPolygonF
-
 
 class ConvexHull(CoordWidget):
     def __init__(self):
@@ -114,7 +111,7 @@ class ConvexHull(CoordWidget):
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = ConvexHull()
     sys.exit(app.exec_())
 
