@@ -3,14 +3,15 @@
 
 from __future__ import division
 import sys, random
-from PyQt4.Qt import Qt
-from PyQt4.QtGui import QApplication, QWidget
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
-from PyQt4.QtGui import QColor, QMatrix, QTransform
+from PyQt5.Qt import Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication,  QWidget
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF
+from PyQt5.QtGui import QColor, QTransform
 # import numpy as np
 from PIL import Image
-import StringIO
+from  io import StringIO
 
 
 def pointInLine(qPointF, qLineF):
@@ -32,30 +33,25 @@ def pointInSegment(qPointF, qLineF):
         res = True
     return res
 
-class CoordWidget(QtGui.QWidget):
+class CoordWidget(QtWidgets.QWidget):
     
     def __init__(self):
         super(CoordWidget, self).__init__()
         self.lastPos = QtCore.QPoint()
+        self.total_length = 0.9
+        self.axisLines = []
+        self.scene_translation_ = QPointF(0, 0)
+        self.lastPos = None
+        self.scene_size_ = 1.5
+        self.images = []   # save widget image to gif
+        self.msgCnt = 0
         self.initUI()
         
     def initUI(self):      
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Line Intersection Test')
-
-        self.total_length = 0.9
-        self.coordinate_system_lines_ = []
-        self.coordinate_system_lines_.append(QPointF(-self.total_length, 0))
-        self.coordinate_system_lines_.append(QPointF(self.total_length, 0))
-        self.coordinate_system_lines_.append(QPointF(0, -self.total_length))
-        self.coordinate_system_lines_.append(QPointF(0, self.total_length))
-
-        self.scene_translation_ = QPointF(0, 0)
-        self.lastPos = None
-        self.scene_size_ = 1.5
-
-        self.images = []   # save widget image to gif
-        self.msgCnt = 0
+        self.axisLines.append(QLineF( QPointF(-self.total_length, 0),   QPointF(self.total_length, 0) ))
+        self.axisLines.append(QLineF( QPointF(0, -self.total_length), QPointF(0, self.total_length)))
         self.show()
 
     def mousePressEvent (self, pe):
@@ -83,7 +79,7 @@ class CoordWidget(QtGui.QWidget):
     def wheelEvent (self, e):   # QWheelEvent e
         old_world_pos_of_mouse = self.screenToWorld(e.pos())
         scale_factor = 1
-        if e.delta() > 0 :
+        if e.angleDelta().y() > 0 :
             scale_factor = scale_factor * 10 / 11
         else:
             scale_factor = scale_factor * 11 / 10
@@ -100,7 +96,7 @@ class CoordWidget(QtGui.QWidget):
         return min(self.width() / self.scene_size_, self.height() / self.scene_size_)
 
     def getWorldToScreenTransform(self):
-        logic_mat = QtGui.QMatrix(1, 0, 0, -1, self.width() / 2, self.height() / 2)   # QMatrix
+        logic_mat = QtGui.QTransform(1, 0, 0, -1, self.width() / 2, self.height() / 2)   
         # 根据场景大小设置缩放系数
         zoom_factor = self.getZoomFactor()                       # float
         scale_mat = QtGui.QTransform.fromScale(zoom_factor, zoom_factor)     #QTransform
@@ -163,7 +159,7 @@ class CoordWidget(QtGui.QWidget):
         color = QColor.fromRgb(200, 200, 200)
         pen.setColor( color )
         qPainter.setPen(pen)
-        qPainter.drawLines(self.coordinate_system_lines_ )
+        qPainter.drawLines(self.axisLines )
 
     # 这两个函数是为了子类override的。
     def drawInWorld(self, qPainter):
@@ -187,7 +183,7 @@ class CoordWidget(QtGui.QWidget):
 
 
 def main():    
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = CoordWidget()
     sys.exit(app.exec_())
 
