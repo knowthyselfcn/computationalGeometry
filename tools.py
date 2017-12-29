@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-
 from __future__ import division
 import sys, random
 sys.path.append('../')
-from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
-from PyQt4.QtGui import QColor, QMatrix, QTransform
+from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF
+from PyQt5.QtGui import QColor,  QTransform
 import numpy as np
 from bintrees import BinaryTree, AVLTree
 
@@ -67,7 +65,7 @@ def findIntersections(S):
         Up = [p]
         Lp = []
         Segs = []
-        T.foreach(lambda k, v: print k, v;if v[0] == p: Segs.append(v[0]) )
+        T.foreach(lambda k, v:  print(k,v ) )
 
 
 

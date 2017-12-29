@@ -5,36 +5,35 @@
 pip install cython
 pip install triangle-20170429-cp27-cp27m-win_amd64.whl   https://www.lfd.uci.edu/~gohlke/pythonlibs/#triangle
 """
-
-
 from __future__ import division
-
 import sys, random
-sys.path.append('../')
-from  coordWidget import CoordWidget
-from PyQt4.Qt import Qt
-from PyQt4.QtGui import QApplication, QWidget
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import QPoint, QPointF, QLine, QLineF
-from PyQt4.QtGui import QColor, QMatrix, QTransform, QPolygonF
+from PyQt5.Qt import Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication,  QWidget
+from PyQt5.QtCore import QPoint, QPointF, QLine, QLineF
+from PyQt5.QtGui import QColor, QTransform, QPolygonF
 import matplotlib.pyplot as plt
 import numpy as np
 
 import triangle
 import triangle.plot
 
+sys.path.append('../')
+from  coordWidget import CoordWidget
+
 class Triangluation(CoordWidget):
     def __init__(self):
         super(Triangluation, self).__init__()
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Triangluation ')
-        # self.vertexs = []   #world  pos
         self.points = []    # screen pos
         self.polygon = QPolygonF()
 
-        # self.holeVertexs = []   #world  pos
         self.holePoints = []    # screen pos
         self.holePolygon = QPolygonF()
+
+        self.lineSeg = []
+        self.indenpandentPoints = []  # screen
 
     def mouseMoveEvent(self, e):
         newPos = e.pos()
@@ -51,18 +50,22 @@ class Triangluation(CoordWidget):
 
     def mousePressEvent(self, qMousePressEvent):
         e = qMousePressEvent
-        modifiers = QtGui.QApplication.keyboardModifiers()
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
         if e.buttons() & Qt.LeftButton:
             self.take_screenshot()
-            if modifiers == QtCore.Qt.ControlModifier:
+            if modifiers == QtCore.Qt.ControlModifier:   # record a hole
                 self.holePoints.append(e.pos())
                 self.makeConvexHull(self.holePoints, self.holePolygon)
-            else:   # record a hole
+            elif modifiers == QtCore.Qt.ShiftModifier:  # record a line seg
+                if len(self.lineSeg) < 3:
+                    self.lineSeg.append( self.screenToWorld(e.pos()))
+            elif  modifiers == QtCore.Qt.AltModifier:
+                self.indenpandentPoints.append(e.pos())
+            else:
                 self.points.append(e.pos())
                 self.makeConvexHull(self.points, self.polygon)
         self.lastPos = e.pos()
         self.update()
-
 
     def isRightTurn(self, p0, p1, p2):
         v1x = p1.x() - p0.x()
@@ -75,7 +78,8 @@ class Triangluation(CoordWidget):
             return True
 
     def makeConvexHull(self, points, polygon):
-        vertices = map(lambda p: self.screenToWorld(p), points)
+        verticesIter = map(lambda p: self.screenToWorld(p), points)
+        vertices = list(verticesIter)
         vertices.sort(key=lambda p: (p.x(), p.y()))
         if len(vertices) < 3:
             return
@@ -99,41 +103,40 @@ class Triangluation(CoordWidget):
     def triangulate(self):
         vertices =[]
         segments = []
-        for i in xrange(self.polygon.size()-1):
+        outBoundarySegments =  []
+        for i in range(self.polygon.size()-1):
             v = self.polygon.at(i)
-            vertices.append([v.x(), v.y()])
-            if( i == (self.polygon.size() -2) ):
-                segments.append([i, 0])
+            vertices.append((v.x(), v.y()))
+            if i == (self.polygon.size() - 2):
+                outBoundarySegments.append((i, 0))
             else:
-                segments.append([i, i + 1])
-        vertices = np.array(vertices)
-        holeVertices = []
-        holeMarkerPos = []
-        for i in xrange(self.holePolygon.size()-1):
+                outBoundarySegments.append((i, i + 1))
+        outVertexNum = len(vertices)
+        for i in range(self.holePolygon.size()-1):
             v = self.holePolygon.at(i)
-            holeVertices.append([v.x(), v.y()])
-        holeVertices = np.array(holeVertices)
+            vertices.append((v.x(), v.y()))
+            n = i + outVertexNum
+            if i == (self.holePolygon.size() - 2):
+                segments.append((n, outVertexNum))
+            else:
+                segments.append((n, n + 1))
+        v = self.lineSeg[0]
+        vertices.append((v.x(), v.y()))
+        v = self.lineSeg[1]
+        vertices.append((v.x(), v.y()))
+        segments.append((len(vertices)-2, len(vertices) - 1))
+        for p in self.indenpandentPoints:
+            v = self.screenToWorld(p)
+            vertices.append((v.x(), v.y()))
+        holeMarkerPos = []
         center = self.holePolygon.boundingRect().center()
-        holeMarkerPos.append([center.x(), center.y()])
-        A = dict(vertices=vertices, segments=segments, holes=holeMarkerPos)
-        print A
-        B = triangle.triangulate(A, 'q') #
-        ax1 = plt.subplot(121, aspect='equal')
-        triangle.plot.plot(ax1,  **B)
+        holeMarkerPos.append((center.x(), center.y()))
+        segments = segments + outBoundarySegments
+        # A1 = triangle.get_data('face.1')
+        A = dict(vertices=np.array(vertices), segments=np.array(segments),  holes=np.array(holeMarkerPos))
+        B = triangle.triangulate(A, 'pqa0.01c')
+        triangle.plot.compare(plt,  A, B)   #
         plt.show()
-
-        # import triangle
-        # import triangle.plot as plot
-        # import matplotlib.pyplot as plt
-        # face = triangle.get_data('face')
-        # print face
-        # face['holes'][0][1] = -70
-        # ax1 = plt.subplot(121, aspect='equal')
-        # plot.plot(ax1, **face)
-        # t = triangle.triangulate(face, 'p')
-        # ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
-        # triangle.plot.plot(ax2, **t)
-        # plt.show()
 
     def keyPressEvent(self, keyEvent):
         e = keyEvent
@@ -150,17 +153,17 @@ class Triangluation(CoordWidget):
         pen = qPainter.pen()
         pen.setColor(QColor.fromRgb(255, 0, 0))
         qPainter.setPen(pen)
-
-        if None != self.polygon:
+        if None is not self.polygon:
             qPainter.drawPolyline(self.polygon)
-
         pen.setColor(QColor.fromRgb(0, 255, 0))
         qPainter.setPen(pen)
-        if None != self.holePolygon:
+        if None is not self.holePolygon:
             qPainter.drawPolyline(self.holePolygon)
-
+        if len(self.lineSeg) == 2:
+            qPainter.drawLine(QLineF(self.lineSeg[0], self.lineSeg[1]))
         pen.setColor(QColor.fromRgb(0, 0, 255))
         qPainter.setPen(pen)
+
 
     def drawInScreen(self, qPainter):
         pen = qPainter.pen()
@@ -171,18 +174,17 @@ class Triangluation(CoordWidget):
         # draw selected points in screen
         for v in self.points:
             qPainter.drawPoint(v)
+        for v in self.indenpandentPoints:
+            qPainter.drawPoint(v)
 
-        for i in xrange(self.polygon.size()-1):
-            qPainter.drawText( self.worldToScreen(self.polygon.at(i)), str(i) )
-        for i in xrange(self.holePolygon.size()-1):
-            qPainter.drawText( self.worldToScreen(self.holePolygon.at(i)), str(i) )
-
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    ex = Triangluation()
-    sys.exit(app.exec_())
+        for i in range(self.polygon.size()-1):
+            qPainter.drawText( self.worldToScreen(self.polygon.at(i)), str(i))
+        for i in range(self.holePolygon.size()-1):
+            n = self.polygon.size() + i - 1
+            qPainter.drawText(self.worldToScreen(self.holePolygon.at(i)), str(n))
 
 
 if __name__ == '__main__':
-    main()
+    app = QtWidgets.QApplication(sys.argv)
+    ex = Triangluation()
+    sys.exit(app.exec_())
